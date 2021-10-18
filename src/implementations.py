@@ -2,13 +2,34 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def build_k_indices(y, k_fold, seed):
-    """build k indices for k-fold."""
-    num_row = y.shape[0]
-    interval = int(num_row / k_fold)
-    np.random.seed(seed)
-    indices = np.random.permutation(num_row)
-    k_indices = [indices[k * interval: (k + 1) * interval] for k in range(k_fold)]
-    return np.array(k_indices)
+      """build k indices for k-fold."""
+      num_row = y.shape[0]
+      interval = int(num_row / k_fold)
+      np.random.seed(seed)
+      indices = np.random.permutation(num_row)
+      k_indices = [indices[k * interval: (k + 1) * interval] for k in range(k_fold)]
+      return np.array(k_indices)
+
+def cross_validation(y, tx, k_fold, seed, fit_function, **fit_function_kwargs):
+      """return the estimated test loss and w."""
+      # get k'th subgroup in test, others in train
+      k_indices = build_k_indices(y, k_fold, seed)
+      loss_te = 0
+      for k in range(k_fold):
+            te_indice = k_indices[k]
+            tr_indice = k_indices[~(np.arange(k_indices.shape[0]) == k)]
+            tr_indice = tr_indice.reshape(-1)
+            y_te = y[te_indice]
+            y_tr = y[tr_indice]
+            x_te = tx[te_indice]
+            x_tr = tx[tr_indice]
+
+            w, loss_tr = fit_function(y_tr, x_tr, **fit_function_kwargs)
+            loss_te += compute_mse(y_te, x_te, w)
+      
+      loss_te = loss_te/k_fold
+
+      return w, loss_te
 
 def compute_mse(y, tx, w):
       """compute the loss by mse."""
@@ -30,8 +51,7 @@ def compute_gradient(y, tx, w):
 def least_squares_GD(y, tx, initial_w, max_iters, gamma):
       '''Linear regression using gradient descent'''
       # Define parameters to store w and loss
-      ws = [initial_w]
-      losses = []
+      loss = 0
       w = initial_w
       for n_iter in range(max_iters):
             # Compute gradient and loss
@@ -40,14 +60,9 @@ def least_squares_GD(y, tx, initial_w, max_iters, gamma):
             
             # Update w by gradient
             w = w - gamma * grad
-            
-            # Store w and loss
-            ws.append(w)
-            losses.append(loss)
             print("Gradient Descent({bi}/{ti}): loss={l}, w0={w0}, w1={w1}".format(
                   bi=n_iter, ti=max_iters - 1, l=loss, w0=w[0], w1=w[1]))
-
-      return losses, ws
+      return w, loss
 
 def compute_stoch_gradient(y, tx, w):
       '''Compute a stochastic gradient'''
