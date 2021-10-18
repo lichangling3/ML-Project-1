@@ -21,7 +21,7 @@ def compute_gradient(y, tx, w):
     """Compute the gradient"""
     e = y - tx.dot(w)
     grad = - tx.T.dot(e) / len(e)
-    return grad, e
+    return grad
 
 
 def compute_stoch_gradient(y, tx, w):
@@ -187,3 +187,27 @@ def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
         end_index = min((batch_num + 1) * batch_size, data_size)
         if start_index != end_index:
             yield shuffled_y[start_index:end_index], shuffled_tx[start_index:end_index]
+
+            
+def standardize(x):  
+    """Returns a standardized dataset by subtracting the mean and dividing by the std. dev for each column""" 
+    return (x - x.mean(axis=0)) / x.std(axis=0)     
+         
+    
+def display_summary_statistics(tx):
+    """Takes a dataset and prints a summary of statistics to the console"""
+    
+    N, _ = tx.shape
+    
+    mean = tx.mean(axis=0)
+    median = np.median(tx, axis=0)
+    std = tx.std(axis=0)
+    max_ = tx.max(axis=0)
+    min_ = tx.min(axis=0)
+    n_undef = (tx <= -999.0).sum(axis=0)
+    pct_undef = n_undef / N * 100
+    
+    print("Column |   Mean   |  Median  | Std dev  |   Max    |    Min   | # Undefined | % Undefined ")
+    for i, (m, s, med, mx, mn, nu, pu) in enumerate(zip(mean, median, std, max_, min_, n_undef, pct_undef)):
+        print(f"{i:6} | {m:8.3f}   {med:8.3f}   {s:8.3f}   {mx:8.3f}   " + 
+              f"{mn:8.3f}   {nu:10.3f}    {pu:10.3f}")
