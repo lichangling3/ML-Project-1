@@ -12,35 +12,58 @@ def compute_mse(y, tx, w):
     return mse
 
 
-def mae(e):
+def compute_mae(e):
     """Compute the mean absolute error given the error vector"""
     return np.mean(np.abs(e))
 
 
-def compute_gradient(y, tx, w):
+def compute_mse_gradient(y, tx, w):
     """Compute the gradient"""
     e = y - tx.dot(w)
     grad = - tx.T.dot(e) / len(e)
     return grad
 
 
-def compute_stoch_gradient(y, tx, w):
-    """Compute a stochastic gradient"""
-    return compute_gradient(y, tx, w)
+def compute_neg_log_loss(y, tx, w):
+    """Compute the negative log likelihood."""
+    sig = sigmoid(tx.dot(w))
+    lhs = y.T.dot(np.log(sig))
+    rhs = (1 - y).T.dot(np.log(1 - sig))
+    return -(lhs + rhs).squeeze()
+
+
+def compute_logistic_gradient(y, tx, w):
+    """Compute the gradient of logisitc loss."""
+    return tx.T.dot(sigmoid(tx.dot(w)) - y)
+
+
+def add_l2_reg(loss_f, grad_f, lambda_):
+    """Takes a loss function and a gradient function, returns the same functions but
+    modified with L2 regularization added to their output"""
+
+    def l2_loss(y, tx, w, *args, **kwargs):
+        return loss_f(y, tx, w, *args, **kwargs) + lambda_ * np.linalg.norm(w)
+    
+    def l2_grad(y, tx, w, *args, **kwargs):
+        return grad_f(y, tx, w, *args, **kwargs) + 2 * lambda_ * w
+    
+    return l2_loss, l2_grad
 
 
 ################################################
 # Regression models
 ################################################
 
-def least_squares_GD(y, tx, initial_w, max_iters, gamma, verbose=False):
-    """Linear regression using gradient descent"""
+def gradient_descent(y, tx, initial_w, max_iters, gamma, compute_loss, compute_grad, verbose=False):
+    """Performs gradient descent using initial parameters and given loss and
+    gradient functions: `compute_loss` and `compute_grad` respectively"""
+    
     w = initial_w
     loss = 0
 
     for n_iter in range(max_iters):
-        grad = compute_gradient(y, tx, w)
-        loss = compute_mse(y, tx, w)
+        grad = compute_grad(y, tx, w)
+        loss = compute_loss(y, tx, w)
 
         w = w - gamma * grad
 
@@ -50,16 +73,19 @@ def least_squares_GD(y, tx, initial_w, max_iters, gamma, verbose=False):
     return w, loss
 
 
-def least_squares_SGD(y, tx, initial_w, max_iters, gamma, batch_size=10, verbose=False):
-    """Linear regression using stochastic gradient descent"""
+def stochastic_gradient_descent(y, tx, initial_w, max_iters, gamma, compute_loss, compute_grad,
+                                batch_size=10, verbose=False):
+    """Performs stochastic gradient descent using initial parameters and given 
+    loss and gradient functions: `compute_loss` and `compute_grad` respectively"""
+    
     w = initial_w
     loss = 0
 
     for n_iter, (minibatch_y, minibatch_tx) in \
         enumerate(batch_iter(y, tx, batch_size, num_batches=max_iters)):
         
-        grad = compute_gradient(minibatch_y, minibatch_tx, w)
-        loss = compute_mse(minibatch_y, minibatch_tx, w)
+        grad = compute_loss(minibatch_y, minibatch_tx, w)
+        loss = compute_grad(minibatch_y, minibatch_tx, w)
 
         w = w - gamma * grad
 
@@ -67,6 +93,18 @@ def least_squares_SGD(y, tx, initial_w, max_iters, gamma, batch_size=10, verbose
             print(f"Stochastic Gradient Descent ({n_iter}/{max_iters - 1}): loss={loss}, w={w}")
 
     return w, loss
+
+
+def least_squares_GD(y, tx, initial_w, max_iters, gamma, verbose=False):
+    """Linear regression using gradient descent"""
+    return gradient_descent(y, tx, initial_w, max_iters, gamma, compute_mse, 
+                            compute_mse_gradient, verbose=verbose)
+
+
+def least_squares_SGD(y, tx, initial_w, max_iters, gamma, batch_size=10, verbose=False):
+    """Linear regression using stochastic gradient descent"""
+    return stochastic_gradient_descent(y, tx, initial_w, max_iters, gamma, compute_mse, 
+                                       compute_mse_grad, batch_size=10, verbose=verbose)
 
 
 def least_squares(y, tx):
@@ -90,16 +128,25 @@ def ridge_regression(y, tx, lambda_):
     return w, compute_mse(y, tx, w)
 
 
-# Logistic regression using gradient descent or SGD
 def logistic_regression(y, tx, initial_w, max_iters, gamma):
-    "TODO"
-    return "TODO"
+    """Logistic regression using gradient descent"""
+    return gradient_descent(y, tx, initial_w, max_iters, gamma, 
+                            compute_neg_log_loss, compute_logistic_gradient)
 
 
-# Regularized logistic regression using gradient descent or SGD
+def logistic_regression_SGD(y, tx, initial_w, max_iters, gamma, batch_size=10):
+    """Logistic regression using stochastic gradient descent"""
+    return stochastic_gradient_descent(y, tx, initial_w, max_iters, gamma, compute_neg_log_loss, 
+                                       compute_logistic_gradient, batch_size=10)
+
+
 def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
-    "TODO"
-    return "TODO"
+    """L2-Regularized logistic regression using gradient descent""" 
+    reg_loss, reg_grad = add_l2_reg(compute_neg_log_loss, 
+                                    compute_logistic_gradient,
+                                    lambda_)
+    
+    return gradient_descent(y, tx, initial_w, max_iters, gamma, reg_loss, reg_grad)
 
 
 ################################################
@@ -162,6 +209,11 @@ def cross_validation(y, tx, k_fold, fit_function, seed=1, **fit_function_kwargs)
 ################################################
 # Other helpers
 ################################################
+
+def sigmoid(t):
+    """apply the sigmoid function on t."""
+    return 1 / (1 + np.exp(-t))
+
 
 def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
     """
