@@ -27,9 +27,8 @@ def compute_mse_gradient(y, tx, w):
 def compute_neg_log_loss(y, tx, w):
     """Compute the negative log likelihood."""
     sig = sigmoid(tx.dot(w))
-    lhs = y.T.dot(np.log(sig))
-    rhs = (1 - y).T.dot(np.log(1 - sig))
-    return -(lhs + rhs).squeeze()
+    loss = y.T.dot(np.log(sig)) + (1 - y).T.dot(np.log(1 - sig))
+    return np.squeeze(-loss)
 
 
 def compute_logistic_gradient(y, tx, w):
@@ -128,23 +127,23 @@ def ridge_regression(y, tx, lambda_):
     return w, compute_mse(y, tx, w)
 
 
-def logistic_regression(y, tx, initial_w, max_iters, gamma):
+def logistic_regression(y, tx, initial_w, max_iters, gamma, verbose=False):
     """Logistic regression using gradient descent"""
     return gradient_descent(y, tx, initial_w, max_iters, gamma, 
-                            compute_neg_log_loss, compute_logistic_gradient)
+                            compute_neg_log_loss, compute_logistic_gradient, verbose=verbose)
 
 
-def logistic_regression_SGD(y, tx, initial_w, max_iters, gamma, batch_size=10):
+def logistic_regression_SGD(y, tx, initial_w, max_iters, gamma, batch_size=10, verbose=False):
     """Logistic regression using stochastic gradient descent"""
     return stochastic_gradient_descent(y, tx, initial_w, max_iters, gamma, compute_neg_log_loss, 
-                                       compute_logistic_gradient, batch_size=10)
+                                       compute_logistic_gradient, batch_size=10, verbose=verbose)
 
 
-def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
+def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma, verbose=False):
     """L2-Regularized logistic regression using gradient descent""" 
     reg_loss, reg_grad = add_l2_reg(compute_neg_log_loss, 
                                     compute_logistic_gradient,
-                                    lambda_)
+                                    lambda_, verbose=verbose)
     
     return gradient_descent(y, tx, initial_w, max_iters, gamma, reg_loss, reg_grad)
 
@@ -212,7 +211,7 @@ def cross_validation(y, tx, k_fold, fit_function, seed=1, **fit_function_kwargs)
 
 def sigmoid(t):
     """apply the sigmoid function on t."""
-    return 1 / (1 + np.exp(-t))
+    return 1.0 / (1.0 + np.exp(-t))
 
 
 def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
