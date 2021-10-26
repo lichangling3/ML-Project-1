@@ -26,8 +26,10 @@ def compute_mse_gradient(y, tx, w):
 
 def compute_neg_log_loss(y, tx, w):
     """Compute the negative log likelihood."""
-    sig = sigmoid(tx.dot(w))
-    loss = y.T.dot(np.log(sig)) + (1 - y).T.dot(np.log(1 - sig))
+    logsig = -np.logaddexp(0, -tx.dot(w))   # == np.log(sigmoid(t))
+    lognegsig = -np.logaddexp(0, tx.dot(w)) # == np.log(1 - sigmoid(t))
+    
+    loss = y.T.dot(logsig) + (1 - y).T.dot(lognegsig)
     return np.squeeze(-loss)
 
 
@@ -64,11 +66,11 @@ def gradient_descent(y, tx, initial_w, max_iters, gamma, compute_loss, compute_g
         grad = compute_grad(y, tx, w)
         loss = compute_loss(y, tx, w)
 
-        w = w - gamma * grad
+        w -= gamma * grad
 
         if verbose:
             print(f"Gradient Descent ({n_iter}/{max_iters - 1}): loss={loss}, w={w}")
-    
+            
     return w, loss
 
 
@@ -86,7 +88,7 @@ def stochastic_gradient_descent(y, tx, initial_w, max_iters, gamma, compute_loss
         grad = compute_loss(minibatch_y, minibatch_tx, w)
         loss = compute_grad(minibatch_y, minibatch_tx, w)
 
-        w = w - gamma * grad
+        w -= gamma * grad
 
         if verbose:
             print(f"Stochastic Gradient Descent ({n_iter}/{max_iters - 1}): loss={loss}, w={w}")
@@ -209,9 +211,16 @@ def cross_validation(y, tx, k_fold, fit_function, seed=1, **fit_function_kwargs)
 # Other helpers
 ################################################
 
+#def sigmoid(t):
+#    """apply the sigmoid function on t."""
+#    return 1.0 / (1.0 + np.exp(-t))
+
 def sigmoid(t):
-    """apply the sigmoid function on t."""
-    return 1.0 / (1.0 + np.exp(-t))
+    "Numerically stable sigmoid function."
+    return np.piecewise(t, [t > 0], 
+                        [lambda i: 1 / (1 + np.exp(-i)), 
+                         lambda i: np.exp(i) / (1 + np.exp(i))])
+
 
 
 def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
