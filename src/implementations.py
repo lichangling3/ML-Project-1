@@ -1,5 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from numpy.core.numeric import cross
+import seaborn as sns
+
+from itertools import product
 
 ################################################
 # Loss functions
@@ -10,6 +14,11 @@ def compute_mse(y, tx, w):
     e = y - tx.dot(w)
     mse = e.dot(e) / (2 * len(e))
     return mse
+
+
+def compute_rmse(y, tx, w):
+    """Compute the loss of a linear model using RMSE"""
+    return np.sqrt(2 * compute_mse(y, tx, w))
 
 
 def compute_mae(e):
@@ -105,7 +114,7 @@ def least_squares_GD(y, tx, initial_w, max_iters, gamma, verbose=False):
 def least_squares_SGD(y, tx, initial_w, max_iters, gamma, batch_size=10, verbose=False):
     """Linear regression using stochastic gradient descent"""
     return stochastic_gradient_descent(y, tx, initial_w, max_iters, gamma, compute_mse, 
-                                       compute_mse_grad, batch_size=10, verbose=verbose)
+                                       compute_mse_gradient, batch_size=batch_size, verbose=verbose)
 
 
 def least_squares(y, tx):
@@ -151,7 +160,7 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma, verbose
 
 
 ################################################
-# Cross validation
+# Cross validation and parameter search
 ################################################
 
 def build_k_indices(y, k_fold, seed=1):
@@ -175,7 +184,7 @@ def build_k_indices(y, k_fold, seed=1):
     return np.array(k_indices)
 
 
-def cross_validation(y, tx, k_fold, fit_function, seed=1, **fit_function_kwargs):
+def cross_validation(y, tx, k_fold, fit_function, score_function, seed=1, **fit_function_kwargs):
     """Takes a dataset and performs cross validation on it using passed training algorithm.
     
     Arguments:
@@ -183,6 +192,7 @@ def cross_validation(y, tx, k_fold, fit_function, seed=1, **fit_function_kwargs)
     tx -- features of dataset
     k_fold -- number of folds used in CV
     fit_function -- training algorithm passed as a function, with the following signature: fit_function(y, tx, **kwargs) -> (weights, training_loss)
+    score_function -- function used to compute loss, averaged across folds, with the signature: loss_function(y, x, w) -> np.number
     
     Keyword arguments:
     seed -- random number generator seed
@@ -192,7 +202,7 @@ def cross_validation(y, tx, k_fold, fit_function, seed=1, **fit_function_kwargs)
         the average test loss over every fold
     """
     k_indices = build_k_indices(y, k_fold, seed)
-    loss_te = 0
+    score_te = 0
 
     for k in range(k_fold):
         te_indices = k_indices[k]
@@ -202,10 +212,50 @@ def cross_validation(y, tx, k_fold, fit_function, seed=1, **fit_function_kwargs)
         y_tr, x_tr = y[tr_indices], tx[tr_indices]
 
         w, _ = fit_function(y_tr, x_tr, **fit_function_kwargs)
-        loss_te += compute_mse(y_te, x_te, w)
+        score_te += score_function(y_te, x_te, w)
 
-    return loss_te/k_fold
+    return score_te/k_fold
 
+
+def parameter_grid_search(y, tx, fit_function, score_function, ff_params={}, seed=1, k_fold=5,
+                          verbose=False, **ff_fixed_params):
+    """Performs hyperparameter search on a given model using grid search.
+    
+    Arguments:
+    y -- labels of dataset
+    tx -- features of dataset
+    fit_function -- training algorithm passed as a function, with the following signature: fit_function(y, tx, **kwargs) -> (weights, training_loss)
+    score_function -- function used to compute score, averaged across folds, with the signature: loss_function(y, x, w) -> np.number
+    
+    Keyword arguments:
+    ff_params -- a dictionary of values to test. Each key is a parameter, with its respective value being an array of possible values for that parameter
+    seed=1 -- random number generator seed
+    k_fold=5 -- number of folds used in CV 
+    verbose=False -- 
+    ff_fixed_params -- arguments to pass to `fit_function` algorithm that do no change
+
+    Returns:
+        a list of dictionaries, each containing a given parameter configuration and its computed score. 
+        the list is sorted from lowest to highest score
+    """
+
+    combinations = product(*ff_params.values())
+    results = []
+
+    for i, params in enumerate(combinations):
+        kwargs = {param: value for param, value in zip(ff_params.keys(), params)}
+        score = cross_validation(y, tx, k_fold, fit_function, score_function, seed=seed,
+                                 **kwargs, **ff_fixed_params)
+
+        results.append({"params": kwargs, "score": score})
+
+        if verbose:
+            print(f"Parameter combination {i}:")
+            print(f"\tParams: {kwargs}")
+            print(f"\tScore: {score}")
+
+    return sorted(results, key=lambda x: x["score"])
+    
 
 ################################################
 # Other helpers
@@ -249,15 +299,22 @@ def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
             yield shuffled_y[start_index:end_index], shuffled_tx[start_index:end_index]
 
             
-def standardize(x):  
-    """Returns a standardized dataset by subtracting the mean and dividing by the std. dev for each column""" 
-    return (x - x.mean(axis=0)) / x.std(axis=0)     
+def standardize(x, mean=None, std=None):  
+    """
+    Takes and dataset and returns a standardized dataset, a mean, and a std. dev. 
+    If no mean/std is passed to the function, the metrics are calulated on the dataset.
+    Standardizing is done by subtracting the mean and dividing by the std. dev for each column, """ 
+    
+    mean = mean if mean is not None else x.mean(axis=0)
+    std = std if std is not None else x.std(axis=0) 
+    
+    return (x - mean) / std, mean, std
          
     
-def display_summary_statistics(tx):
+def display_summary_statistics(tx, column_names=None):
     """Takes a dataset and prints a summary of statistics to the console"""
     
-    N, _ = tx.shape
+    N, D = tx.shape
     
     mean = tx.mean(axis=0)
     median = np.median(tx, axis=0)
@@ -265,9 +322,27 @@ def display_summary_statistics(tx):
     max_ = tx.max(axis=0)
     min_ = tx.min(axis=0)
     n_undef = (tx <= -999.0).sum(axis=0)
-    pct_undef = n_undef / N * 100
+    pct_undef = (tx <= -999.0).mean(axis=0) * 100
+
+    column_names = column_names if column_names is not None else range(D)
     
-    print("Column |   Mean   |  Median  | Std dev  |   Max    |    Min   | # Undefined | % Undefined ")
-    for i, (m, s, med, mx, mn, nu, pu) in enumerate(zip(mean, median, std, max_, min_, n_undef, pct_undef)):
-        print(f"{i:6} | {m:8.3f}   {med:8.3f}   {s:8.3f}   {mx:8.3f}   " + 
-              f"{mn:8.3f}   {nu:10.3f}    {pu:10.3f}")
+    print("   Column                      |   Mean   |  Median  | Std dev  |   Max    |    Min   | # Undefined | % Undef ")
+    for i, (col, m, med, s, mx, mn, nu, pu) in enumerate(zip(column_names, mean, median, std, max_, min_, n_undef, pct_undef)):
+        print(f"{i:2}-{col:27} | {m:8.3f}   {med:8.3f}   {s:8.3f}   {mx:8.3f}   " + 
+              f"{mn:8.3f}   {nu:10.3f}    {pu:7.3f}")
+
+def plot_corr_matrix(x, column_names):
+    """Computes the pearson correlation matrix between features
+    and plots it"""
+    
+    # Compute correlation matrix
+    corr = np.corrcoef(x, rowvar=False)
+
+    # Setup triangular mask and colour palette
+    mask = np.triu(np.ones_like(corr, dtype=bool))
+    cmap = sns.diverging_palette(230, 20, as_cmap=True)
+
+    f, ax = plt.subplots(figsize=(30, 30))
+    sns.heatmap(corr, mask=mask, cmap=cmap, vmax=1, vmin=-1, center=0,
+                xticklabels=column_names, yticklabels=column_names, annot=True,
+                square=True, linewidths=.5, cbar_kws={"shrink": .5})
