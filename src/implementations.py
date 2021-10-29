@@ -39,12 +39,12 @@ def compute_neg_log_loss(y, tx, w):
     lognegsig = -np.logaddexp(0, tx.dot(w)) # == np.log(1 - sigmoid(t))
     
     loss = y.T.dot(logsig) + (1 - y).T.dot(lognegsig)
-    return np.squeeze(-loss)
+    return np.squeeze(-loss) / len(y)
 
 
 def compute_logistic_gradient(y, tx, w):
     """Compute the gradient of logisitc loss."""
-    return tx.T.dot(sigmoid(tx.dot(w)) - y)
+    return tx.T.dot(sigmoid(tx.dot(w)) - y) / len(y)
 
 
 def add_l2_reg(loss_f, grad_f, lambda_):
@@ -154,7 +154,7 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma, verbose
     """L2-Regularized logistic regression using gradient descent""" 
     reg_loss, reg_grad = add_l2_reg(compute_neg_log_loss, 
                                     compute_logistic_gradient,
-                                    lambda_, verbose=verbose)
+                                    lambda_)
     
     return gradient_descent(y, tx, initial_w, max_iters, gamma, reg_loss, reg_grad)
 
