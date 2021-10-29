@@ -68,7 +68,7 @@ def gradient_descent(y, tx, initial_w, max_iters, gamma, compute_loss, compute_g
     """Performs gradient descent using initial parameters and given loss and
     gradient functions: `compute_loss` and `compute_grad` respectively"""
     
-    w = initial_w
+    w = initial_w.copy()
     loss = 0
 
     for n_iter in range(max_iters):
@@ -84,11 +84,11 @@ def gradient_descent(y, tx, initial_w, max_iters, gamma, compute_loss, compute_g
 
 
 def stochastic_gradient_descent(y, tx, initial_w, max_iters, gamma, compute_loss, compute_grad,
-                                batch_size=10, verbose=False):
+                                batch_size=1, verbose=False):
     """Performs stochastic gradient descent using initial parameters and given 
     loss and gradient functions: `compute_loss` and `compute_grad` respectively"""
     
-    w = initial_w
+    w = initial_w.copy()
     loss = 0
 
     for n_iter, (minibatch_y, minibatch_tx) in \
