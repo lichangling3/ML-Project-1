@@ -33,14 +33,13 @@ def compute_mse_gradient(y, tx, w):
     return grad
 
 
-def compute_neg_log_loss(y, tx, w):
-    """Compute the negative log likelihood."""
-    logsig = -np.logaddexp(0, -tx.dot(w))   # == np.log(sigmoid(t))
-    lognegsig = -np.logaddexp(0, tx.dot(w)) # == np.log(1 - sigmoid(t))
-    
-    loss = y.T.dot(logsig) + (1 - y).T.dot(lognegsig)
-    return np.squeeze(-loss) / len(y)
+def compute_logistic_loss(y, tx, w):
+    """Compute the logistic loss."""
+    pred = tx.dot(w)
+    y = np.asarray(y)
+    logsig = -np.logaddexp(0, -pred)   # == np.log(sigmoid(pred))
 
+    return np.mean((1 - y) * pred - logsig)
 
 def compute_logistic_gradient(y, tx, w):
     """Compute the gradient of logisitc loss."""
@@ -141,18 +140,18 @@ def ridge_regression(y, tx, lambda_):
 def logistic_regression(y, tx, initial_w, max_iters, gamma, verbose=False):
     """Logistic regression using gradient descent"""
     return gradient_descent(y, tx, initial_w, max_iters, gamma, 
-                            compute_neg_log_loss, compute_logistic_gradient, verbose=verbose)
+                            compute_logistic_loss, compute_logistic_gradient, verbose=verbose)
 
 
 def logistic_regression_SGD(y, tx, initial_w, max_iters, gamma, batch_size=10, verbose=False):
     """Logistic regression using stochastic gradient descent"""
-    return stochastic_gradient_descent(y, tx, initial_w, max_iters, gamma, compute_neg_log_loss, 
+    return stochastic_gradient_descent(y, tx, initial_w, max_iters, gamma, compute_logistic_loss, 
                                        compute_logistic_gradient, batch_size=10, verbose=verbose)
 
 
 def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma, verbose=False):
     """L2-Regularized logistic regression using gradient descent""" 
-    reg_loss, reg_grad = add_l2_reg(compute_neg_log_loss, 
+    reg_loss, reg_grad = add_l2_reg(compute_logistic_loss, 
                                     compute_logistic_gradient,
                                     lambda_)
     
