@@ -211,7 +211,7 @@ def cross_validation(y, tx, k_fold, fit_function, score_function, seed=1, **fit_
         y_te, x_te = y[te_indices], tx[te_indices]
         y_tr, x_tr = y[tr_indices], tx[tr_indices]
 
-        w, _ = fit_function(y_tr, x_tr, **fit_function_kwargs)
+        w, fit_loss = fit_function(y_tr, x_tr, **fit_function_kwargs)
         score_te += score_function(y_te, x_te, w)
 
     return score_te/k_fold
