@@ -8,7 +8,7 @@
 \title{Machine Learning Course CS-433 - Project 1 report}
 
 \author{
-  Changling Li, Julian Blackwell, Luca Bataillard\\
+  Luca Bataillard, Julian Blackwell, Changling Li\\
   \textit{School of Computer and Communication Sciences, EPFL}
 }
 
@@ -41,9 +41,9 @@ Then, we did some basic data checks such as making sure the labels correspond ei
 We inspected the first values of the features to confirm the previous claims. As expected, we noticed some \texttt{-999.0} values and \texttt{PRI\_jet\_num} is indeed discrete the only feature that has discrete values. All the other variables are floating point and continuous.
 \subsection{Summary statistics} 
 By computing the summary statistics on the data, we noticed that undefined values are not present in all columns. However, in columns where they are present, they comprise a large proportion of the data.
-We also noticed that each feature follows a very different distribution.
+We also noticed that each feature follows a very different distribution. 
 \subsection{Correlation between features} 
-To check if there are obvious relationships or correlation between the features, we implemented the function \texttt{plot\_corr\_matrix} from \texttt{implementations.py} in order to have a visual representation of the lower triangle of the Pearson correlation matrix between the features. We noticed some features are strongly correlated to each other (see Fig. \ref{corr_matrix}).
+To check if there are obvious relationships or correlation between the features, we implemented the function \texttt{plot\_corr\_matrix} from \texttt{implementations.py} in order to have a visual representation of the lower triangle of the Pearson correlation matrix between the features. The triangle contains all the Pearson correlation coefficients which give a measure of linear correlation between the features. We noticed some features are strongly correlated to each other (see Fig. \ref{corr_matrix}). 
 
 
 \section{Feature processing}
@@ -54,9 +54,16 @@ As mentioned in the exploratory data analysis, we noticed a few features that ha
 
 Moreover, we also handled the other undefined values by replacing them with the mean of their respective columns, again with the help of the function \texttt{handle\_invalid}.
 
-\subsection{Remove features}
-The abstract should really be written last, along with the title of
-the paper. The four points that should be covered:
+\subsection{Remove correlated features}
+From Fig. \ref{corr_matrix}, we observed some features that are strongly correlated with others. These features contribute very less in predicting the output but increase the computational cost. We therefore made the decision to discard the features that are characterized by a correlation coefficient higher than 0.8. The ones that are concerned by this criteria are the features : \texttt{DER\_pt\_h, DER\_sum\_pt, PRI\_met\_sumet}.
+
+\subsection{Standardization}
+We noticed in the summary statistics that there are some features that are measured at different scales; they have large differences between their ranges or simply they are measure in different measurement units. This means that each feature could not contribute equally to the model fitting and might end up creating a bias. We have thus chosen to standardize or Z-score normalize our data by subtracting the mean and dividing by the standard deviation for each value of each feature with the help of the function \texttt{standardize} : $standardized\_feature = \frac{feature - mean(feature)}{standard\_deviation(feature)}$
+
+
+
+
+
 \begin{enumerate}
 \item State the problem.
 \item Say why it is an interesting problem.
@@ -67,22 +74,6 @@ the paper. The four points that should be covered:
 please \emph{use a
   spell checker}.
 
-\subsection{Figures and Tables}
-
-\begin{figure}[tbp]
-  \centering
-  \includegraphics[width=\columnwidth]{denoised_signal_1d}
-  \caption{Signal compression and denoising using the Fourier basis.}
-  \vspace{-3mm}
-  \label{fig:denoise-fourier}
-\end{figure}
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=\columnwidth]{local_wdenoised_1d}
-  \vspace{-3mm}
-  \caption{Signal compression and denoising using the Daubechies wavelet basis.}
-  \label{fig:denoise-wavelet}
-\end{figure}
 
 Use examples and illustrations to clarify ideas and results. For
 example, by comparing Figure~\ref{fig:denoise-fourier} and
@@ -270,8 +261,9 @@ suggestions.
 \bibliographystyle{IEEEtran}
 \bibliography{literature}
 
+
 \begin{figure}[h]
-  \includegraphics[scale = 0.75]{latex-example-paper/corr_matrix.png}
+  \includegraphics[scale = 0.75]{corr_matrix.png}
   \caption{Lower triangle of the Pearson correlation matrix between features}
   \label{corr_matrix}
 \end{figure}
