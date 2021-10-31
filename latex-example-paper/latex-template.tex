@@ -16,46 +16,39 @@
 
 \section{Introduction}
 The aim of this project is to learn to use the concepts presented in the lectures and practiced in the labs on a
-real-world dataset, start to finish. In the following sections, we will present every step taken such as exploratory data analysis to understand the dataset and the features, before        ,applying feature processing and engineering to clean the dataset and extract more meaningful information. We implemented the machine learning methods from the set of regression analysis such as linear regression, ridge regression and logistic regression using gradient descent, stochastic gradient descent or normal equations. We analyzed the results produced by these different methods and continuously improved the models, by finally choosing the best one. This project was done in the context of a recent popular machine learning challenge - finding the Higgs boson -, using original data from CERN~\cite{higgs}.
+real-world dataset, start to finish. In the following sections, we will present every step taken such as exploratory data analysis to understand the dataset and the features, before applying feature processing and engineering to clean the dataset and extract more meaningful information. We implemented the machine learning methods from the set of regression analysis such as linear regression, ridge regression and logistic regression using gradient descent, stochastic gradient descent or normal equations. We analyzed the results produced by these different methods and continuously improved the models, by finally choosing the best one. This project was done in the context of a recent popular machine learning challenge - finding the Higgs boson -, using original data from CERN~\cite{higgs}.
 
-
-\section{The Structure of a Paper}
+\section{Exploratory data analysis}
 \label{sec:structure-paper}
 
-Scientific papers usually begin with the description of the problem,
-justifying why the problem is interesting. Most importantly, it argues
-that the problem is still unsolved, or that the current solutions are
-unsatisfactory. This leads to the main gist of the paper, which is
-``the idea''. The authors then show evidence, using derivations or
-experiments, that the idea works. Since science does not occur in a
-vacuum, a proper comparison to the current state of the art is often
-part of the results. Following these ideas, papers usually have the
-following structure:
+In order to learn about our dataset, We first read appendix B of the original Higgs paper~\cite{higgs} and discover several key points : 
+
+\begin{itemize}
+
+\item The event label (string) $y_i \in \{s, b\}$ (s for signal, b for background)
+\item The variables prefixed with PRI (for PRImitives) are “raw” quantities about the bunch collision as measured by the detector.
+\item The variables prefixed with DER (for DERived) are quantities computed from the primitive features
+\item Undefined values are denoted by \texttt{-999.0}, which is outside the normal range of all variables.
+\item All variables are floating point and continuous, apart from 
+\texttt{PRI\_jet\_num}, which ranges in $\{0, 1, 2, 3\}$
+
+\end{itemize}
+\ \\
+Then, after loading the data from the file \texttt{train.csv} using the function \texttt{load\_csv\_data} from the file \texttt{ proj1\_helpers.py}, we had to make sure that the labels correspond either to 1 (which corresponds to s) and to -1 (for b). Then, we inspected the size of the dataset which contains 250'000 data samples with 30 feature columns. It reassures us on the fact that we will not face the challenges of a high-dimensional data. Then, we analyzed our data as explained in the following subsections.
+\ \\
 \begin{description}
-\item[Abstract] \ \\
-  Short description of the whole paper, to help the
-  reader decide whether to read it.
-\item[Introduction] \ \\
-  Describe your problem and state your
-  contributions.
-\item[Models and Methods] \ \\
-  Describe your idea and how it was implemented to solve
-  the problem. Survey the related work, giving credit where credit is
-  due.
-\item[Results] \ \\
-  Show evidence to support your claims made in the
-  introduction.
-\item[Discussion] \ \\
-  Discuss the strengths and weaknesses of your
-  approach, based on the results. Point out the implications of your
-  novel idea on the application concerned.
-\item[Summary] \ \\
-  Summarize your contributions in light of the new
-  results.
+\item[Inspecting the features] \ \\
+  We inspected the first values of the features to confirm the previous claims. As expected, we noticed some \texttt{-999.0} values and \texttt{PRI\_jet\_num} is indeed discrete the only feature that has discrete values. All the other variables are floating point and continuous.
+\item[Summary statistics] \ \\
+By computing the summary statistics on the data, we noticed that undefined values are not present in all columns. However, in columns where they are present, they comprise a large proportion of the data.
+We also noticed that each feature follows a very different distribution.
+\item[Correlation between features] \ \\
+To check if there are obvious relationships or correlation between the features, we implemented the function \texttt{plot\_corr\_matrix} from \texttt{implementations.py} in order to have a visual representation of the lower triangle of the Pearson correlation matrix between the features. We noticed some features are strongly correlated to each other.
+
 \end{description}
 
 
-\section{Tips for Good Writing}
+\section{Feature processing}
 \label{sec:tips-writing}
 
 The ideas for good writing have come
