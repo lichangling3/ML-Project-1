@@ -12,7 +12,7 @@ This project is organized as follows :
     - **_implementations.py_** which contains all the other functions coded by ourselves used to create this machine learning system
     - **_project1.ipynb_** is the jupyter notebook with all the steps of this machine learning project
 - the file **_run.py_** which produces exactly the same .csv predictions we used in our best submission to the competition system
-- the file **_CS-433_project1_report.pdf_** which is our report that provides a full explanation of our ML system and our findings, made by using LaTeX.
+- the file **_brr-submission.pdf_** which is the report of our group _brr_ that provides a full explanation of our ML system and our findings, made by using LaTeX.
 
 ## How to use our project
 Just make sure to have the libraries mentioned below installed on your environment before running the cells in the jupyter notebook.
@@ -22,7 +22,7 @@ In this project we used a few libraries other than NumPy for vizualisation purpo
 - matplotlib.pyplot
 - seaborn
 
-## Team members
+## Members of group brr
 [Luca Bataillard - 282152](https://github.com/bataillard)
 [Julian Blackwell - 289803](https://github.com/JulianBlackwell)
 [Changling Li - 282440](https://github.com/lichangling3)
