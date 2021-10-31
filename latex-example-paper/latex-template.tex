@@ -15,8 +15,8 @@
 \maketitle
 
 \section{Introduction}
-The aim of this project is to learn to use the concepts presented in the lectures and practiced in the labs on a
-real-world dataset, start to finish. In the following sections, we will present every step taken such as exploratory data analysis to understand the dataset and the features, before applying feature processing and engineering to clean the dataset and extract more meaningful information. We implemented the machine learning methods from the set of regression analysis such as linear regression, ridge regression and logistic regression using gradient descent, stochastic gradient descent or normal equations. We analyzed the results produced by these different methods and continuously improved the models, by finally choosing the best one. This project was done in the context of a recent popular machine learning challenge - finding the Higgs boson -, using original data from CERN~\cite{higgs}.
+The aim of this project is to learn to use the concepts of machine learning presented in the lectures and practiced in the labs on a
+real-world dataset. In the following sections, we will present every step taken such as exploratory data analysis to understand the dataset, before applying feature processing to clean the dataset and extract more meaningful information. We implemented the machine learning methods from the set of regression analysis such as linear regression, ridge regression and logistic regression using gradient descent, stochastic gradient descent or normal equations. Then, we analyzed the results produced by these different methods and continuously improved the models, by finally choosing the best one. This project was done in the context of a recent popular machine learning challenge - finding the Higgs boson -, using original data from CERN~\cite{higgs}.
 
 \section{Exploratory data analysis}
 \label{sec:structure-paper}
@@ -34,37 +34,27 @@ In order to learn about our dataset, We first read appendix B of the original Hi
 
 \end{itemize}
 \ \\
-Then, after loading the data from the file \texttt{train.csv} using the function \texttt{load\_csv\_data} from the file \texttt{ proj1\_helpers.py}, we had to make sure that the labels correspond either to 1 (which corresponds to s) and to -1 (for b). Then, we inspected the size of the dataset which contains 250'000 data samples with 30 feature columns. It reassures us on the fact that we will not face the challenges of a high-dimensional data. Then, we analyzed our data as explained in the following subsections.
+Then, we did some basic data checks such as making sure the labels correspond either to 1 (which corresponds to s) and to -1 (for b). Then, we inspected the size of the dataset which contains 250'000 data samples with 30 feature columns. With a dataset of this type (n >> p), we will not face the challenges of a high-dimensional data. Then, we analyzed our data in the following subsections.
 \ \\
-\begin{description}
-\item[Inspecting the features] \ \\
-  We inspected the first values of the features to confirm the previous claims. As expected, we noticed some \texttt{-999.0} values and \texttt{PRI\_jet\_num} is indeed discrete the only feature that has discrete values. All the other variables are floating point and continuous.
-\item[Summary statistics] \ \\
+
+\subsection{Inspecting the features} 
+We inspected the first values of the features to confirm the previous claims. As expected, we noticed some \texttt{-999.0} values and \texttt{PRI\_jet\_num} is indeed discrete the only feature that has discrete values. All the other variables are floating point and continuous.
+\subsection{Summary statistics} 
 By computing the summary statistics on the data, we noticed that undefined values are not present in all columns. However, in columns where they are present, they comprise a large proportion of the data.
 We also noticed that each feature follows a very different distribution.
-\item[Correlation between features] \ \\
+\subsection{Correlation between features} 
 To check if there are obvious relationships or correlation between the features, we implemented the function \texttt{plot\_corr\_matrix} from \texttt{implementations.py} in order to have a visual representation of the lower triangle of the Pearson correlation matrix between the features. We noticed some features are strongly correlated to each other.
-
-\end{description}
 
 
 \section{Feature processing}
-\label{sec:tips-writing}
+In order to get the most out of our data and to ease model computational cost for the best possible results from our models, we applied some feature processings.
 
-The ideas for good writing have come
-from~\cite{editor10,jones08,anderson04}.
+\subsection{Handle undefined values}
+As mentioned in the exploratory data analysis, we noticed a few features that have over $70\%$ invalid values. We therefore decided to remove these columns to allow for more robust models, with the help of the function \texttt{handle\_invalid}. Finally, the features concerned were :\texttt{DER\_deltaeta\_jet\_jet, DER\_mass\_jet\_jet, DER\_prodeta\_jet\_jet, DER\_lep\_eta\_centrality, PRI\_jet\_subleading\_pt, PRI\_jet\_subleading\_eta, PRI\_jet\_subleading\_phi}.
 
-\subsection{Getting Help}
-One should try to get a draft read by as many friendly people as
-possible. And remember to treat your test readers with respect. If
-they are unable to understand something in your paper, then it is
-highly likely that your reviewers will not understand it
-either. Therefore, do not be defensive about the criticisms you get,
-but use it as an opportunity to improve the paper. Before your submit
-your friends to the pain of reading your draft, please \emph{use a
-  spell checker}.
+Moreover, we also handled the other undefined values by replacing them with the mean of their respective columns, again with the help of the function \texttt{handle\_invalid}.
 
-\subsection{Abstract}
+\subsection{Remove features}
 The abstract should really be written last, along with the title of
 the paper. The four points that should be covered~\cite{jones08}:
 \begin{enumerate}
@@ -73,6 +63,9 @@ the paper. The four points that should be covered~\cite{jones08}:
 \item Say what your solution achieves.
 \item Say what follows from your solution.
 \end{enumerate}
+
+please \emph{use a
+  spell checker}.
 
 \subsection{Figures and Tables}
 
