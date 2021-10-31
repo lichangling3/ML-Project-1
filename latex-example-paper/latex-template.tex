@@ -21,7 +21,7 @@ real-world dataset. In the following sections, we will present every step taken 
 \section{Exploratory data analysis}
 \label{sec:structure-paper}
 
-In order to learn about our dataset, We first read appendix B of the original Higgs paper~\cite{higgs} and discover several key points : 
+In order to learn about our dataset, We first read appendix B of the original Higgs paper~\cite{higgs} and discovered several key points : 
 
 \begin{itemize}
 
@@ -34,7 +34,7 @@ In order to learn about our dataset, We first read appendix B of the original Hi
 
 \end{itemize}
 \ \\
-Then, we did some basic data checks such as making sure the labels correspond either to 1 (which corresponds to s) and to -1 (for b). Then, we inspected the size of the dataset which contains 250'000 data samples with 30 feature columns. With a dataset of this type (n >> p), we will not face the challenges of a high-dimensional data. Then, we analyzed our data in the following subsections.
+Then, we did some basic data checks such as making sure the labels correspond either to 1 (which corresponds to s) and to -1 (for b). Then, we inspected the size of the dataset which contains 250'000 data samples with 30 feature columns. With a dataset of this type (n $>>$ p), we will not face the challenges of a high-dimensional data. Then, we analyzed our data in the following subsections.
 \ \\
 
 \subsection{Inspecting the features} 
@@ -43,20 +43,20 @@ We inspected the first values of the features to confirm the previous claims. As
 By computing the summary statistics on the data, we noticed that undefined values are not present in all columns. However, in columns where they are present, they comprise a large proportion of the data.
 We also noticed that each feature follows a very different distribution.
 \subsection{Correlation between features} 
-To check if there are obvious relationships or correlation between the features, we implemented the function \texttt{plot\_corr\_matrix} from \texttt{implementations.py} in order to have a visual representation of the lower triangle of the Pearson correlation matrix between the features. We noticed some features are strongly correlated to each other.
+To check if there are obvious relationships or correlation between the features, we implemented the function \texttt{plot\_corr\_matrix} from \texttt{implementations.py} in order to have a visual representation of the lower triangle of the Pearson correlation matrix between the features. We noticed some features are strongly correlated to each other (see Fig. \ref{corr_matrix}).
 
 
 \section{Feature processing}
 In order to get the most out of our data and to ease model computational cost for the best possible results from our models, we applied some feature processings.
 
 \subsection{Handle undefined values}
-As mentioned in the exploratory data analysis, we noticed a few features that have over $70\%$ invalid values. We therefore decided to remove these columns to allow for more robust models, with the help of the function \texttt{handle\_invalid}. Finally, the features concerned were :\texttt{DER\_deltaeta\_jet\_jet, DER\_mass\_jet\_jet, DER\_prodeta\_jet\_jet, DER\_lep\_eta\_centrality, PRI\_jet\_subleading\_pt, PRI\_jet\_subleading\_eta, PRI\_jet\_subleading\_phi}.
+As mentioned in the exploratory data analysis, we noticed a few features that have over $70\%$ invalid values. We therefore decided to remove these columns to allow for more robust models, with the help of the function \texttt{handle\_invalid}. The removed features were :\texttt{DER\_deltaeta\_jet\_jet, DER\_mass\_jet\_jet, DER\_prodeta\_jet\_jet, DER\_lep\_eta\_centrality, PRI\_jet\_subleading\_pt, PRI\_jet\_subleading\_eta, PRI\_jet\_subleading\_phi}.
 
 Moreover, we also handled the other undefined values by replacing them with the mean of their respective columns, again with the help of the function \texttt{handle\_invalid}.
 
 \subsection{Remove features}
 The abstract should really be written last, along with the title of
-the paper. The four points that should be covered~\cite{jones08}:
+the paper. The four points that should be covered:
 \begin{enumerate}
 \item State the problem.
 \item Say why it is an interesting problem.
@@ -108,7 +108,7 @@ the given data to the underlying model.
 The methods part of this section, is not a step-by-step, directive,
 protocol as you might see in your lab manual, but detailed enough such
 that an interested reader can reproduce your
-work~\cite{anderson04,wavelab}.
+work.
 
 The methods section of a research paper provides the information by
 which a study's validity is judged.
@@ -116,7 +116,7 @@ Therefore, it requires a clear and precise description of how an
 experiment was done, and the rationale
 for why specific experimental procedures were chosen.
 It is usually helpful to
-structure the methods section by~\cite{kallet04methods}:
+structure the methods section by:
 \begin{enumerate}
 \item Layout the model you used to describe the problem or the solution.
 \item Describing the algorithms used in the study, briefly including
@@ -166,11 +166,11 @@ report the mean (average value) along with a measure of variability
 \section{Tips for Good Software}
 \label{sec:tips-software}
 
-There is a lot of literature (for example~\cite{hunt99pragmatic} and
-\cite{spolsky04software}) on how to write software. It is not the
+There is a lot of literature (for example and
+) on how to write software. It is not the
 intention of this section to replace software engineering
 courses. However, in the interests of reproducible
-research~\cite{schwab00}, there are a few guidelines to make your
+research, there are a few guidelines to make your
 reader happy:
 \begin{itemize}
 \item Have a \texttt{README} file that (at least) describes what your
@@ -269,5 +269,11 @@ suggestions.
 
 \bibliographystyle{IEEEtran}
 \bibliography{literature}
+
+\begin{figure}[h]
+  \includegraphics[scale = 0.75]{latex-example-paper/corr_matrix.png}
+  \caption{Lower triangle of the Pearson correlation matrix between features}
+  \label{corr_matrix}
+\end{figure}
 
 \end{document}
