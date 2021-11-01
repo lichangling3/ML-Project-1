@@ -389,9 +389,12 @@ def detect_outlier(column, max_dev=2):
     return ids[outlier_filter]
 
 def expand_poly(data, degree=2):
+    # Prototype shape (will be dropped later)
     init = np.zeros((data.shape[0], 1))
+    # Get combinations of columns of certain degree
     cs = combinations_with_replacement(data.T, degree)
     for c in cs:
+        # multiply columns in combination
         new_column = np.ones(init.shape[0])
         for col in c:
             new_column = np.multiply(new_column, col)
@@ -401,11 +404,13 @@ def expand_poly(data, degree=2):
 
 
 def construct_poly(data, power):
+    """Returns data raised to power"""
     return np.power(data, power)
 
 
 # Test accuracy
 def eval_performance(weights, test_y, test_x):
+    """Takes the weights test dataset to return the accuracy"""
     y_predicted = predict_labels(weights, test_x)
     accuracy = len(y_predicted[y_predicted == test_y]) / len(y_predicted)
     return accuracy
