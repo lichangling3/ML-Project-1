@@ -29,13 +29,6 @@ y_outlier_free = np.delete(y_train, list(outlier_row_ids), axis=0)
 
 pairwise_poly = tuple([expand_poly(x_outlier_free, i) for i in range(1, 3)])
 pairwise_poly = np.hstack(pairwise_poly)
-# Check degree performance
-for k in range(4, 15):
-    col_polynomials = tuple([construct_poly(x_outlier_free, i) for i in range(3, k)])
-    col_polynomials = np.hstack(col_polynomials)
-    x_expanded = np.hstack((pairwise_poly, col_polynomials))
-    x_expanded, _, _ = standardize(x_expanded)
-    print('Degree : ', k-1, ' - ', cross_val_acc(y_outlier_free, x_expanded))
 
 col_polynomials = tuple([construct_poly(x_outlier_free, i) for i in range(3, 13)])
 col_polynomials = np.hstack(col_polynomials)
@@ -45,12 +38,10 @@ x_expanded = np.hstack((pairwise_poly, col_polynomials))
 #CREATE MODEL
 x_expanded_std, x_exp_mean, x_exp_std = standardize(x_expanded)
 
-ridge_regression_params = {
-    "lambda_": [1e-02, 1e-03, 5e-05, 2e-05, 1e-05, 1e-06, 1e-07, 1e-08, 1e-09],
+best_ridge_params = {
+    "lambda_": 1e-09,
 }
 
-best_ridge_params = parameter_grid_search(y_outlier_free, x_expanded_std, ridge_regression, compute_rmse, 
-                                    ff_params=ridge_regression_params, verbose=False)[0]["params"]
 submit_weights, _ = ridge_regression(y_outlier_free, x_expanded_std, **best_ridge_params)
 
 #Creating submission
