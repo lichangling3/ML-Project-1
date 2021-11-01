@@ -3,6 +3,7 @@
 ## Introduction
 The aim of this project is to learn to use the concepts of machine learning presented in the lectures and practiced in the labs on a
 real-world dataset, in the context of a recent popular machine learning challenge - finding the Higgs boson -, using original data from CERN~\cite{higgs}. For any further information on this machine learning challenge and its dataset, feel free to consult the [original paper](https://higgsml.lal.in2p3.fr/files/2014/04/documentation_v1.8.pdf).
+The ID of our best submission is 164381	
 
 ## Organisation
 This project is organized as follows :
