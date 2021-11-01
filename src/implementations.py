@@ -398,3 +398,31 @@ def expand_poly(data, degree=2):
         init = np.hstack((init, new_column.reshape((-1,1))))
     init = np.delete(init, 0, axis=1)
     return init
+
+
+def construct_poly(data, power):
+    return np.power(data, power)
+
+
+# Test accuracy
+def eval_performance(weights, test_y, test_x):
+    y_predicted = predict_labels(weights, test_x)
+    accuracy = len(y_predicted[y_predicted == test_y]) / len(y_predicted)
+    return accuracy
+
+# Cross validate with ridge regression to approximate model performance
+def cross_val_acc(y, tx, k_fold=10, eval_=eval_performance, seed=1, lambda_=1e-15):
+    k_indices = build_k_indices(y, k_fold, seed)
+    score_te = 0
+
+    for k in range(k_fold):
+        te_indices = k_indices[k]
+        tr_indices = k_indices[~(np.arange(k_indices.shape[0]) == k)].reshape(-1)
+
+        y_te, x_te = y[te_indices], tx[te_indices]
+        y_tr, x_tr = y[tr_indices], tx[tr_indices]
+
+        w, fit_loss = ridge_regression(y_tr, x_tr, lambda_)
+        score_te += eval_(w, y_te, x_te)
+
+    return score_te/k_fold
