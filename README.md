@@ -11,11 +11,12 @@ This project is organized as follows :
     - **_proj1_helpers.py_** which contains the helper functions provided by the Professor
     - **_implementations.py_** which contains all the other functions coded by ourselves used to create this machine learning system
     - the file **_run.py_** which produces exactly the same .csv predictions we used in our best submission to the competition system
+    - **_project1.ipynb_** which contains the additional code that shows several results and figures produced for the analysis of our ML system
 - the file **_brr-submission.pdf_** which is the report of our group _brr_ that provides a full explanation of our ML system and our findings.
 
 ## How to use our project
 Just make sure to have the libraries mentioned below installed on your environment before running the cells in the jupyter notebook.
-In order to reproduce our predictions, please download the dataset available on the [competition arena](https://www.aicrowd.com/challenges/epfl-machine-learning-higgs) in a repository named _data_ at the same level of repository _src_.
+In order to reproduce our predictions, please download the dataset available on the [competition arena](https://www.aicrowd.com/challenges/epfl-machine-learning-higgs) in a repository named _data_ at the same level of repository.
 
 ## Libraries
 In this project we used a few libraries other than NumPy for vizualisation purposes : 
