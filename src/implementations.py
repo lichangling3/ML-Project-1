@@ -3,11 +3,11 @@ import matplotlib.pyplot as plt
 from numpy.core.numeric import cross
 import seaborn as sns
 
-from itertools import product
+from itertools import product, combinations_with_replacement
 
 ################################################
 # Loss functions
-################################################
+################################################s
 
 def compute_mse(y, tx, w):
     """Compute the loss of a linear model using MSE"""
@@ -33,18 +33,17 @@ def compute_mse_gradient(y, tx, w):
     return grad
 
 
-def compute_neg_log_loss(y, tx, w):
-    """Compute the negative log likelihood."""
-    logsig = -np.logaddexp(0, -tx.dot(w))   # == np.log(sigmoid(t))
-    lognegsig = -np.logaddexp(0, tx.dot(w)) # == np.log(1 - sigmoid(t))
-    
-    loss = y.T.dot(logsig) + (1 - y).T.dot(lognegsig)
-    return np.squeeze(-loss)
+def compute_logistic_loss(y, tx, w):
+    """Compute the logistic loss."""
+    pred = tx.dot(w)
+    y = np.asarray(y)
+    logsig = -np.logaddexp(0, -pred)   # == np.log(sigmoid(pred))
 
+    return np.mean((1 - y) * pred - logsig)
 
 def compute_logistic_gradient(y, tx, w):
     """Compute the gradient of logisitc loss."""
-    return tx.T.dot(sigmoid(tx.dot(w)) - y)
+    return tx.T.dot(sigmoid(tx.dot(w)) - y) / len(y)
 
 
 def add_l2_reg(loss_f, grad_f, lambda_):
@@ -68,7 +67,7 @@ def gradient_descent(y, tx, initial_w, max_iters, gamma, compute_loss, compute_g
     """Performs gradient descent using initial parameters and given loss and
     gradient functions: `compute_loss` and `compute_grad` respectively"""
     
-    w = initial_w
+    w = initial_w.copy()
     loss = 0
 
     for n_iter in range(max_iters):
@@ -84,11 +83,11 @@ def gradient_descent(y, tx, initial_w, max_iters, gamma, compute_loss, compute_g
 
 
 def stochastic_gradient_descent(y, tx, initial_w, max_iters, gamma, compute_loss, compute_grad,
-                                batch_size=10, verbose=False):
+                                batch_size=1, verbose=False):
     """Performs stochastic gradient descent using initial parameters and given 
     loss and gradient functions: `compute_loss` and `compute_grad` respectively"""
     
-    w = initial_w
+    w = initial_w.copy()
     loss = 0
 
     for n_iter, (minibatch_y, minibatch_tx) in \
@@ -141,20 +140,20 @@ def ridge_regression(y, tx, lambda_):
 def logistic_regression(y, tx, initial_w, max_iters, gamma, verbose=False):
     """Logistic regression using gradient descent"""
     return gradient_descent(y, tx, initial_w, max_iters, gamma, 
-                            compute_neg_log_loss, compute_logistic_gradient, verbose=verbose)
+                            compute_logistic_loss, compute_logistic_gradient, verbose=verbose)
 
 
 def logistic_regression_SGD(y, tx, initial_w, max_iters, gamma, batch_size=10, verbose=False):
     """Logistic regression using stochastic gradient descent"""
-    return stochastic_gradient_descent(y, tx, initial_w, max_iters, gamma, compute_neg_log_loss, 
+    return stochastic_gradient_descent(y, tx, initial_w, max_iters, gamma, compute_logistic_loss, 
                                        compute_logistic_gradient, batch_size=10, verbose=verbose)
 
 
 def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma, verbose=False):
     """L2-Regularized logistic regression using gradient descent""" 
-    reg_loss, reg_grad = add_l2_reg(compute_neg_log_loss, 
+    reg_loss, reg_grad = add_l2_reg(compute_logistic_loss, 
                                     compute_logistic_gradient,
-                                    lambda_, verbose=verbose)
+                                    lambda_)
     
     return gradient_descent(y, tx, initial_w, max_iters, gamma, reg_loss, reg_grad)
 
@@ -211,7 +210,7 @@ def cross_validation(y, tx, k_fold, fit_function, score_function, seed=1, **fit_
         y_te, x_te = y[te_indices], tx[te_indices]
         y_tr, x_tr = y[tr_indices], tx[tr_indices]
 
-        w, _ = fit_function(y_tr, x_tr, **fit_function_kwargs)
+        w, fit_loss = fit_function(y_tr, x_tr, **fit_function_kwargs)
         score_te += score_function(y_te, x_te, w)
 
     return score_te/k_fold
@@ -346,3 +345,89 @@ def plot_corr_matrix(x, column_names):
     sns.heatmap(corr, mask=mask, cmap=cmap, vmax=1, vmin=-1, center=0,
                 xticklabels=column_names, yticklabels=column_names, annot=True,
                 square=True, linewidths=.5, cbar_kws={"shrink": .5})
+
+
+def handle_invalid(x, column_names=None):
+    """Takes a dataset and a list of columns names. Removes columns with too many invalid values. 
+    Replaces remaining invalid values with mean of its respective column."""
+
+    invalid_value = -999.0
+    invalid_threshold = 0.7
+
+    # Remove columns with a pct of invalid values above 70%
+    pct_undef = (x <= invalid_value).mean(axis=0)
+    below_thresh = pct_undef < invalid_threshold
+
+    print(f"{(~below_thresh).sum()} columns are above the invalid threshold. Removing", end="\n\t")
+    if column_names is not None:
+        print(*column_names[~below_thresh], sep="\n\t")
+        column_names = column_names[below_thresh]
+
+    x = x[:, below_thresh]
+
+    # Replace -999 with mean value of remaining values for each column still in dataset
+    for i in range(x.shape[1]):
+        col = x[:, i]
+        mean = col[col > invalid_value].mean()
+        col[col <= invalid_value] = mean
+
+    return x, column_names
+
+def remove_columns(data, col_ids):
+    """Takes a dataset and a list of column names. Removes these columns from the data set"""
+    return np.delete(data, col_ids, axis=1)
+
+
+def detect_outlier(column, max_dev=2):
+    """Takes a column and the maximal number of standard deviations. 
+    Returns the indices of each data point whose value deviates by more than 2 standard deviations from the column mean."""
+    column_mean = np.mean(column)
+    column_std = np.std(column)
+    dist_from_mean = abs(column - column_mean)
+    outlier_filter = dist_from_mean > max_dev * column_std
+    ids = np.arange(len(column))
+    return ids[outlier_filter]
+
+def expand_poly(data, degree=2):
+    # Prototype shape (will be dropped later)
+    init = np.zeros((data.shape[0], 1))
+    # Get combinations of columns of certain degree
+    cs = combinations_with_replacement(data.T, degree)
+    for c in cs:
+        # multiply columns in combination
+        new_column = np.ones(init.shape[0])
+        for col in c:
+            new_column = np.multiply(new_column, col)
+        init = np.hstack((init, new_column.reshape((-1,1))))
+    init = np.delete(init, 0, axis=1)
+    return init
+
+
+def construct_poly(data, power):
+    """Returns data raised to power"""
+    return np.power(data, power)
+
+
+# Test accuracy
+def eval_performance(weights, test_y, test_x):
+    """Takes the weights test dataset to return the accuracy"""
+    y_predicted = predict_labels(weights, test_x)
+    accuracy = len(y_predicted[y_predicted == test_y]) / len(y_predicted)
+    return accuracy
+
+# Cross validate with ridge regression to approximate model performance
+def cross_val_acc(y, tx, k_fold=10, eval_=eval_performance, seed=1, lambda_=1e-15):
+    k_indices = build_k_indices(y, k_fold, seed)
+    score_te = 0
+
+    for k in range(k_fold):
+        te_indices = k_indices[k]
+        tr_indices = k_indices[~(np.arange(k_indices.shape[0]) == k)].reshape(-1)
+
+        y_te, x_te = y[te_indices], tx[te_indices]
+        y_tr, x_tr = y[tr_indices], tx[tr_indices]
+
+        w, fit_loss = ridge_regression(y_tr, x_tr, lambda_)
+        score_te += eval_(w, y_te, x_te)
+
+    return score_te/k_fold
