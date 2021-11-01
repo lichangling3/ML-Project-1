@@ -10,8 +10,7 @@ This project is organized as follows :
 - the repository **_src_** that includes: 
     - **_proj1_helpers.py_** which contains the helper functions provided by the Professor
     - **_implementations.py_** which contains all the other functions coded by ourselves used to create this machine learning system
-    - **_project1.ipynb_** is the jupyter notebook with all the steps of this machine learning project
-- the file **_run.py_** which produces exactly the same .csv predictions we used in our best submission to the competition system
+    - the file **_run.py_** which produces exactly the same .csv predictions we used in our best submission to the competition system
 - the file **_brr-submission.pdf_** which is the report of our group _brr_ that provides a full explanation of our ML system and our findings, made by using LaTeX.
 
 ## How to use our project
