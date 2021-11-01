@@ -3,11 +3,11 @@ import matplotlib.pyplot as plt
 from numpy.core.numeric import cross
 import seaborn as sns
 
-from itertools import product
+from itertools import product, combinations_with_replacement
 
 ################################################
 # Loss functions
-################################################
+################################################s
 
 def compute_mse(y, tx, w):
     """Compute the loss of a linear model using MSE"""
@@ -345,3 +345,56 @@ def plot_corr_matrix(x, column_names):
     sns.heatmap(corr, mask=mask, cmap=cmap, vmax=1, vmin=-1, center=0,
                 xticklabels=column_names, yticklabels=column_names, annot=True,
                 square=True, linewidths=.5, cbar_kws={"shrink": .5})
+
+
+def handle_invalid(x, column_names=None):
+    """Takes a dataset and a list of columns names. Removes columns with too many invalid values. 
+    Replaces remaining invalid values with mean of its respective column."""
+
+    invalid_value = -999.0
+    invalid_threshold = 0.7
+
+    # Remove columns with a pct of invalid values above 70%
+    pct_undef = (x <= invalid_value).mean(axis=0)
+    below_thresh = pct_undef < invalid_threshold
+
+    print(f"{(~below_thresh).sum()} columns are above the invalid threshold. Removing", end="\n\t")
+    if column_names is not None:
+        print(*column_names[~below_thresh], sep="\n\t")
+        column_names = column_names[below_thresh]
+
+    x = x[:, below_thresh]
+
+    # Replace -999 with mean value of remaining values for each column still in dataset
+    for i in range(x.shape[1]):
+        col = x[:, i]
+        mean = col[col > invalid_value].mean()
+        col[col <= invalid_value] = mean
+
+    return x, column_names
+
+def remove_columns(data, col_ids):
+    """Takes a dataset and a list of column names. Removes these columns from the data set"""
+    return np.delete(data, col_ids, axis=1)
+
+
+def detect_outlier(column, max_dev=2):
+    """Takes a column and the maximal number of standard deviations. 
+    Returns the indices of each data point whose value deviates by more than 2 standard deviations from the column mean."""
+    column_mean = np.mean(column)
+    column_std = np.std(column)
+    dist_from_mean = abs(column - column_mean)
+    outlier_filter = dist_from_mean > max_dev * column_std
+    ids = np.arange(len(column))
+    return ids[outlier_filter]
+
+def expand_poly(data, degree=2):
+    init = np.zeros((data.shape[0], 1))
+    cs = combinations_with_replacement(data.T, degree)
+    for c in cs:
+        new_column = np.ones(init.shape[0])
+        for col in c:
+            new_column = np.multiply(new_column, col)
+        init = np.hstack((init, new_column.reshape((-1,1))))
+    init = np.delete(init, 0, axis=1)
+    return init
